@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
-	"io"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -22,11 +22,18 @@ func main() {
 	}
 	defer l.Close()
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		go handleConnection(conn)
 	}
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
 
 	for {
 		buf := make([]byte, 1024)
@@ -34,7 +41,7 @@ func main() {
 		if err != nil {
 			if err == io.EOF {
 				fmt.Println("Connection closed")
-				os.Exit(0)
+				return
 			}
 			fmt.Println("Error reading from connection: ", err.Error())
 		}
